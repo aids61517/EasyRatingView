@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="EasyRatingView">
+        <attr name="numStars" format="integer"/>
+        <attr name="rating" format="float"/>
+        <attr name="step" format="float"/>
+        <attr name="spacing" format="dimension"/>
+        <attr name="fullDrawable" format="reference"/>
+        <attr name="emptyDrawable" format="reference"/>
+    </declare-styleable>
+</resources>
