@@ -63,18 +63,10 @@ class EasyRatingView @JvmOverloads constructor(
             return
         }
 
-        val widthMode = MeasureSpec.getMode(widthMeasureSpec)
-        val widthSize = MeasureSpec.getSize(widthMeasureSpec)
-
-        var realWidth = widthSize
         val drawableWidth = emptyDrawable.intrinsicWidth
         val drawableHeight = emptyDrawable.intrinsicHeight
-        val needWidth = numberStars * drawableWidth + (numberStars - 1) * spacing
-        if (widthMode == MeasureSpec.AT_MOST) {
-            realWidth = if (needWidth < realWidth) needWidth else realWidth
-            realWidth += paddingStart + paddingEnd
-        }
-
+        val expectWidth = numberStars * drawableWidth + (numberStars - 1) * spacing + paddingStart + paddingEnd
+        val realWidth = resolveSizeAndState(expectWidth, widthMeasureSpec, 0)
         val expectHeight = drawableHeight + paddingTop + paddingBottom
         val realHeight = resolveSizeAndState(expectHeight, heightMeasureSpec, 0)
         setMeasuredDimension(realWidth, realHeight)
