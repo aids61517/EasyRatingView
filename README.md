@@ -33,6 +33,8 @@ optional attributes
 ```groovy
 app:numStars, default value is 5
 app:step, default value is 0.5 
+app:rating
+app:spacing
 ``` 
 
 ## Download
