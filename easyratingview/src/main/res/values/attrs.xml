@@ -4,6 +4,7 @@
         <attr name="numStars" format="integer"/>
         <attr name="rating" format="float"/>
         <attr name="step" format="float"/>
+        <attr name="maxRating" format="float"/>
         <attr name="spacing" format="dimension"/>
         <attr name="fullDrawable" format="reference"/>
         <attr name="emptyDrawable" format="reference"/>
