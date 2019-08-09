@@ -151,7 +151,7 @@ class EasyRatingView @JvmOverloads constructor(
 
         fullDrawable?.apply {
             val maxRating = if (maxRating != 0f) maxRating else numberStars.toFloat()
-            val rating = if (rating > maxRating) rating else (rating / maxRating) * numberStars
+            val rating = if (rating > maxRating) maxRating else (rating / maxRating) * numberStars
             val finalRating = rating.getFinalRatingByStep(step)
             val width = intrinsicWidth
             val height = intrinsicHeight
