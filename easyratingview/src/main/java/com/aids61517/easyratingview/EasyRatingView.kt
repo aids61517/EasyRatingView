@@ -13,32 +13,94 @@ class EasyRatingView @JvmOverloads constructor(
     attributeSet: AttributeSet? = null,
     defStyleAttribute: Int
 ) : View(context, attributeSet, defStyleAttribute) {
-    constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
+    constructor(context: Context, attrs: AttributeSet? = null) : this(context, attrs, 0)
 
-    private lateinit var emptyDrawable: Drawable
-    private lateinit var fullDrawable: Drawable
-
-    private val fullBitmapShader by lazy {
-        val srcBitmap = drawableToBitmap(fullDrawable)
-        BitmapShader(srcBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-    }
-
-    private val fullDrawablePaint by lazy {
-        Paint().apply {
-            isAntiAlias = true
-            shader = fullBitmapShader
-        }
-    }
-
-    var rating: Float = 0f
+    var emptyDrawableResourceId: Int = 0
         set(value) {
-            field = if (value > numberStars) numberStars.toFloat() else value
+            if (field != value) {
+                field = value
+                emptyDrawable = ContextCompat.getDrawable(context, value)!!
+            }
+        }
+
+    var emptyDrawable: Drawable? = null
+        set(value) {
+            field = value
+            invalidate()
+            requestLayout()
+        }
+
+    var fullDrawableResourceId: Int = 0
+        set(value) {
+            if (field != value) {
+                field = value
+                fullDrawable = ContextCompat.getDrawable(context, value)!!
+            }
+        }
+
+    var fullDrawable: Drawable? = null
+        set(value) {
+            field = value
+            value?.let {
+                val srcBitmap = drawableToBitmap(value)
+                fullBitmapShader =
+                    BitmapShader(srcBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+            }
             invalidate()
         }
 
-    private val numberStars: Int
-    private val spacing: Int
-    private val step: Float
+    var rating: Float = 0f
+        set(value) {
+            if (field != value) {
+                field = value
+                invalidate()
+            }
+        }
+
+    var numberStars: Int = 5
+        set(value) {
+            if (field != value) {
+                field = value
+                invalidate()
+                requestLayout()
+            }
+        }
+
+    var spacing: Int = 0
+        set(value) {
+            if (field != value) {
+                field = value
+                invalidate()
+                requestLayout()
+            }
+        }
+
+    var step: Float = 0.5f
+        set(value) {
+            if (field != value) {
+                field = value
+                invalidate()
+            }
+        }
+
+    var maxRating: Float = 0f
+        set(value) {
+            if (field != value) {
+                field = value
+                invalidate()
+            }
+        }
+
+    private var fullBitmapShader: BitmapShader? = null
+        set(value) {
+            field = value
+            fullDrawablePaint = Paint().apply {
+                isAntiAlias = true
+                shader = fullBitmapShader
+            }
+        }
+
+    private var fullDrawablePaint: Paint? = null
 
     init {
         val typedArray = context.obtainStyledAttributes(attributeSet, R.styleable.EasyRatingView)
@@ -46,42 +108,40 @@ class EasyRatingView @JvmOverloads constructor(
         spacing = typedArray.getDimensionPixelSize(R.styleable.EasyRatingView_spacing, 0)
         rating = typedArray.getFloat(R.styleable.EasyRatingView_rating, 0f)
         step = typedArray.getFloat(R.styleable.EasyRatingView_step, 0.5f)
-        val fullDrawableId = typedArray.getResourceId(R.styleable.EasyRatingView_fullDrawable, 0)
-        val emptyDrawableId = typedArray.getResourceId(R.styleable.EasyRatingView_emptyDrawable, 0)
+        maxRating = typedArray.getFloat(R.styleable.EasyRatingView_maxRating, 0f)
+        fullDrawableResourceId = typedArray.getResourceId(R.styleable.EasyRatingView_fullDrawable, 0)
+        emptyDrawableResourceId = typedArray.getResourceId(R.styleable.EasyRatingView_emptyDrawable, 0)
         typedArray.recycle()
-        if (fullDrawableId != 0) {
-            fullDrawable = ContextCompat.getDrawable(context, fullDrawableId)!!
-        }
-        if (emptyDrawableId != 0) {
-            emptyDrawable = ContextCompat.getDrawable(context, emptyDrawableId)!!
-        }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        if (::emptyDrawable.isInitialized.not() || numberStars == 0) {
+        if (emptyDrawable == null || numberStars == 0) {
             setMeasuredDimension(0, 0)
             return
         }
 
-        val drawableWidth = emptyDrawable.intrinsicWidth
-        val drawableHeight = emptyDrawable.intrinsicHeight
-        val expectWidth = numberStars * drawableWidth + (numberStars - 1) * spacing + paddingStart + paddingEnd
-        val realWidth = resolveSizeAndState(expectWidth, widthMeasureSpec, 0)
-        val expectHeight = drawableHeight + paddingTop + paddingBottom
-        val realHeight = resolveSizeAndState(expectHeight, heightMeasureSpec, 0)
-        setMeasuredDimension(realWidth, realHeight)
+        emptyDrawable?.let {
+            val drawableWidth = it.intrinsicWidth
+            val drawableHeight = it.intrinsicHeight
+            val expectWidth =
+                numberStars * drawableWidth + (numberStars - 1) * spacing + paddingStart + paddingEnd
+            val realWidth = resolveSizeAndState(expectWidth, widthMeasureSpec, 0)
+            val expectHeight = drawableHeight + paddingTop + paddingBottom
+            val realHeight = resolveSizeAndState(expectHeight, heightMeasureSpec, 0)
+            setMeasuredDimension(realWidth, realHeight)
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
-        if (::emptyDrawable.isInitialized.not() || numberStars == 0) {
+        if (emptyDrawable == null || numberStars == 0) {
             return
         }
 
         val drawStartX = paddingStart
         val drawStartY = paddingTop
-        emptyDrawable.apply {
-            val width = emptyDrawable.intrinsicWidth
-            val height = emptyDrawable.intrinsicHeight
+        emptyDrawable?.apply {
+            val width = intrinsicWidth
+            val height = intrinsicHeight
             for (i in 0 until numberStars) {
                 val startX = i * (width + spacing) + drawStartX
                 setBounds(startX, drawStartY, startX + width, drawStartY + height)
@@ -89,11 +149,9 @@ class EasyRatingView @JvmOverloads constructor(
             }
         }
 
-        if (::fullDrawable.isInitialized.not()) {
-            return
-        }
-
-        fullDrawable.apply {
+        fullDrawable?.apply {
+            val maxRating = if (maxRating != 0f) maxRating else numberStars.toFloat()
+            val rating = if (rating > maxRating) rating else (rating / maxRating) * numberStars
             val finalRating = rating.getFinalRatingByStep(step)
             val width = intrinsicWidth
             val height = intrinsicHeight
@@ -114,7 +172,7 @@ class EasyRatingView @JvmOverloads constructor(
                 0f,
                 targetWidth,
                 height.toFloat(),
-                fullDrawablePaint
+                fullDrawablePaint!!
             )
             canvas.restore()
         }
