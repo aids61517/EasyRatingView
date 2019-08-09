@@ -33,10 +33,21 @@ optional attributes
 ```groovy
 app:numStars, default value is 5
 app:step, default value is 0.5 
+app:maxRating, default value equals numStars 
 app:rating
 app:spacing
 ``` 
 
+also you can new one programmatically
+```xml
+EasyRatingView(context).apply {
+  emptyDrawableResourceId = //your empty drawable id like R.drawable.ic_review_empty
+  fullDrawableResourceId = //your full drawable id like R.drawable.ic_review_full
+  rating = 3f
+  maxRating = 4f
+  spacing = //value in px
+}
+```
 ## Download
 
 Add the JitPack repository to the build.gradle file:
@@ -50,5 +61,5 @@ allprojects {
 ```
 Add the Gradle dependency:
 ```groovy
-implementation 'com.github.aids61517:EasyRatingView:1.0.1'
+implementation 'com.github.aids61517:EasyRatingView:1.0.2'
 ```
