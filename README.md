@@ -11,6 +11,7 @@ A rating view which can be added spacing between stars.
   android:id="@+id/ratingView"
   android:layout_width="wrap_content"
   android:layout_height="wrap_content"
+  android:gravity="center"
   app:emptyDrawable="@drawable/ic_review_empty_small"
   app:fullDrawable="@drawable/ic_review_full_small"
   app:numStars="5"
@@ -36,6 +37,8 @@ app:step, default value is 0.5
 app:maxRating, default value equals numStars 
 app:rating
 app:spacing
+app:verticalSpacing, works when horizontal spacing is not enought
+android:gravity, default value is start|top
 ``` 
 
 also you can new one programmatically
@@ -61,5 +64,5 @@ allprojects {
 ```
 Add the Gradle dependency:
 ```groovy
-implementation 'com.github.aids61517:EasyRatingView:1.0.2'
+implementation 'com.github.aids61517:EasyRatingView:1.1.0'
 ```
