@@ -6,7 +6,9 @@
         <attr name="step" format="float"/>
         <attr name="maxRating" format="float"/>
         <attr name="spacing" format="dimension"/>
+        <attr name="verticalSpacing" format="dimension"/>
         <attr name="fullDrawable" format="reference"/>
         <attr name="emptyDrawable" format="reference"/>
+        <attr name="android:gravity"/>
     </declare-styleable>
 </resources>
