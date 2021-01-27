@@ -5,8 +5,11 @@ import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
+import android.util.Log
+import android.view.Gravity
 import android.view.View
 import androidx.core.content.ContextCompat
+import kotlin.math.floor
 
 class EasyRatingView @JvmOverloads constructor(
     context: Context,
@@ -57,7 +60,7 @@ class EasyRatingView @JvmOverloads constructor(
             }
         }
 
-    var numberStars: Int = 5
+    var numberOfStars: Int = 5
         set(value) {
             if (field != value) {
                 field = value
@@ -67,6 +70,15 @@ class EasyRatingView @JvmOverloads constructor(
         }
 
     var spacing: Int = 0
+        set(value) {
+            if (field != value) {
+                field = value
+                invalidate()
+                requestLayout()
+            }
+        }
+
+    var verticalSpacing: Int = 0
         set(value) {
             if (field != value) {
                 field = value
@@ -102,84 +114,142 @@ class EasyRatingView @JvmOverloads constructor(
 
     private var fullDrawablePaint: Paint? = null
 
+    var countOfStarsPerRow: Int = 0
+        private set
+
+    private val boundCalculator by lazy {
+        StarBoundCalculator(this)
+    }
+
     init {
         val typedArray = context.obtainStyledAttributes(attributeSet, R.styleable.EasyRatingView)
-        numberStars = typedArray.getInt(R.styleable.EasyRatingView_numStars, 5)
+        numberOfStars = typedArray.getInt(R.styleable.EasyRatingView_numStars, 5)
         spacing = typedArray.getDimensionPixelSize(R.styleable.EasyRatingView_spacing, 0)
+        verticalSpacing =
+            typedArray.getDimensionPixelSize(R.styleable.EasyRatingView_verticalSpacing, 0)
         rating = typedArray.getFloat(R.styleable.EasyRatingView_rating, 0f)
         step = typedArray.getFloat(R.styleable.EasyRatingView_step, 0.5f)
         maxRating = typedArray.getFloat(R.styleable.EasyRatingView_maxRating, 0f)
-        fullDrawableResourceId = typedArray.getResourceId(R.styleable.EasyRatingView_fullDrawable, 0)
-        emptyDrawableResourceId = typedArray.getResourceId(R.styleable.EasyRatingView_emptyDrawable, 0)
+        fullDrawableResourceId =
+            typedArray.getResourceId(R.styleable.EasyRatingView_fullDrawable, 0)
+        emptyDrawableResourceId =
+            typedArray.getResourceId(R.styleable.EasyRatingView_emptyDrawable, 0)
+        val gravity = typedArray.getInt(R.styleable.EasyRatingView_android_gravity, Gravity.START)
+        setGravity(gravity)
         typedArray.recycle()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        if (emptyDrawable == null || numberStars == 0) {
+        val widthSize = MeasureSpec.getSize(widthMeasureSpec)
+        if (emptyDrawable == null || numberOfStars == 0) {
             setMeasuredDimension(0, 0)
             return
         }
 
         emptyDrawable?.let {
             val drawableWidth = it.intrinsicWidth
-            val drawableHeight = it.intrinsicHeight
             val expectWidth =
-                numberStars * drawableWidth + (numberStars - 1) * spacing + paddingStart + paddingEnd
-            val realWidth = resolveSizeAndState(expectWidth, widthMeasureSpec, 0)
-            val expectHeight = drawableHeight + paddingTop + paddingBottom
+                numberOfStars * drawableWidth + (numberOfStars - 1) * spacing + paddingStart + paddingEnd
+            val calculateWidth = resolveSizeAndState(expectWidth, widthMeasureSpec, 0)
+            val realWidth = if (calculateWidth > widthSize) widthSize else calculateWidth
+            Log.d("EasyRatingView", "onMeasure realWidth = $realWidth")
+            countOfStarsPerRow = calculateCountOfStarsPerRow(realWidth)
+            Log.d("EasyRatingView", "onMeasure countOfStarsPerRow = $countOfStarsPerRow")
+            val expectHeight = calculateViewHeight(realWidth)
             val realHeight = resolveSizeAndState(expectHeight, heightMeasureSpec, 0)
+            Log.d("EasyRatingView", "onMeasure expectHeight = $expectHeight")
+            Log.d("EasyRatingView", "onMeasure realHeight = $realHeight")
             setMeasuredDimension(realWidth, realHeight)
         }
     }
 
+    private fun calculateCountOfStarsPerRow(width: Int): Int {
+        // n * bitmapWidth + (n - 1) * spacing < remainingWidth
+        // n * (bitmapWidth + spacing) < remainingWidth + spacing
+        val remainingWidth = width - paddingStart - paddingEnd
+        val bitmapWidth = emptyDrawable!!.intrinsicWidth
+        val calculateN = (remainingWidth + spacing).toFloat() / (bitmapWidth + spacing)
+        return floor(calculateN).toInt()
+    }
+
+    private fun calculateViewHeight(realWidth: Int): Int {
+        val isMultiLine = (numberOfStars > countOfStarsPerRow)
+        val drawableHeight = emptyDrawable!!.intrinsicHeight
+        return if (isMultiLine) {
+            val lines = (numberOfStars / countOfStarsPerRow) + 1
+            lines * drawableHeight + paddingTop + paddingBottom + (lines - 1) * verticalSpacing
+        } else {
+            drawableHeight + paddingTop + paddingBottom
+        }
+    }
+
+    fun setGravity(gravity: Int) {
+        boundCalculator.gravity = gravity
+    }
+
     override fun onDraw(canvas: Canvas) {
-        if (emptyDrawable == null || numberStars == 0) {
+        if (emptyDrawable == null || numberOfStars == 0) {
             return
         }
 
-        val drawStartX = paddingStart
-        val drawStartY = paddingTop
         emptyDrawable?.apply {
-            val width = intrinsicWidth
-            val height = intrinsicHeight
-            for (i in 0 until numberStars) {
-                val startX = i * (width + spacing) + drawStartX
-                setBounds(startX, drawStartY, startX + width, drawStartY + height)
-                draw(canvas)
-            }
+            drawStar(canvas, this, numberOfStars)
         }
 
         fullDrawable?.apply {
-            val maxRating = if (maxRating != 0f) maxRating else numberStars.toFloat()
-            val rating = if (rating > maxRating) maxRating else (rating / maxRating) * numberStars
-            val finalRating = rating.getFinalRatingByStep(step)
-            val width = intrinsicWidth
-            val height = intrinsicHeight
-            val fullCount = finalRating.toInt()
-            for (i in 0 until fullCount) {
-                val startX = i * (width + spacing) + drawStartX
-                setBounds(startX, drawStartY, startX + width, drawStartY + height)
-                draw(canvas)
-            }
+            val ratingByStep = getRatingByStep(step)
+            val fullCountOfStar = ratingByStep.toInt()
+            drawStar(canvas, this, fullCountOfStar)
 
-            val offsetX = fullCount * (width + spacing) + drawStartX
-            val offsetY = drawStartY.toFloat()
+            val indexLineOfNextStar = (fullCountOfStar + 1) / countOfStarsPerRow
+            val lineDrawStarX = boundCalculator.getBoundStart(indexLineOfNextStar)
+            val lineDrawStarY = boundCalculator.getBoundTop(indexLineOfNextStar)
+            val indexOfStar = (ratingByStep - indexLineOfNextStar * countOfStarsPerRow).toInt()
+            val drawStartX = lineDrawStarX + indexOfStar * (intrinsicWidth + spacing)
             canvas.save()
-            canvas.translate(offsetX.toFloat(), offsetY)
-            val targetWidth = width * (finalRating % 1)
+            canvas.translate(drawStartX.toFloat(), lineDrawStarY.toFloat())
+            val targetWidth = intrinsicWidth * (ratingByStep % 1)
             canvas.drawRect(
                 0f,
                 0f,
                 targetWidth,
-                height.toFloat(),
+                intrinsicHeight.toFloat(),
                 fullDrawablePaint!!
             )
             canvas.restore()
         }
     }
 
-    private fun Float.getFinalRatingByStep(step: Float): Float {
-        val newRatingRatio = this / step
+    private fun drawStar(canvas: Canvas, drawable: Drawable, countOfStar: Int) {
+        val lines = (countOfStar / countOfStarsPerRow) + 1
+        drawable.run {
+            val drawableWidth = intrinsicWidth
+            val drawableHeight = intrinsicHeight
+            repeat(lines) { indexOfLine ->
+                val drawStartX = boundCalculator.getBoundStart(indexOfLine)
+                val drawStartY = boundCalculator.getBoundTop(indexOfLine)
+                val startCountOfStar = indexOfLine * countOfStarsPerRow
+                val endCountOfStart =
+                    if (startCountOfStar + countOfStarsPerRow > countOfStar) countOfStar else startCountOfStar + countOfStarsPerRow
+                for (i in 0 until (endCountOfStart - startCountOfStar)) {
+                    val startX = i * (drawableWidth + spacing) + drawStartX
+                    setBounds(
+                        startX,
+                        drawStartY,
+                        startX + drawableWidth,
+                        drawStartY + drawableHeight
+                    )
+                    draw(canvas)
+                }
+            }
+
+        }
+    }
+
+    private fun getRatingByStep(step: Float): Float {
+        val maxRating = if (maxRating != 0f) maxRating else numberOfStars.toFloat()
+        val rating = if (rating > maxRating) maxRating else (rating / maxRating) * numberOfStars
+        val newRatingRatio = rating / step
         val multiple = if ((newRatingRatio % 1) >= 0.5) {
             newRatingRatio.toInt() + 1
         } else {
