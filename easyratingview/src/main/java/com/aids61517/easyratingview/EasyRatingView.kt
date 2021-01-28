@@ -29,7 +29,6 @@ class EasyRatingView @JvmOverloads constructor(
     var emptyDrawable: Drawable? = null
         set(value) {
             field = value
-            invalidate()
             requestLayout()
         }
 
@@ -64,7 +63,6 @@ class EasyRatingView @JvmOverloads constructor(
         set(value) {
             if (field != value) {
                 field = value
-                invalidate()
                 requestLayout()
             }
         }
@@ -73,7 +71,6 @@ class EasyRatingView @JvmOverloads constructor(
         set(value) {
             if (field != value) {
                 field = value
-                invalidate()
                 requestLayout()
             }
         }
@@ -82,7 +79,6 @@ class EasyRatingView @JvmOverloads constructor(
         set(value) {
             if (field != value) {
                 field = value
-                invalidate()
                 requestLayout()
             }
         }
