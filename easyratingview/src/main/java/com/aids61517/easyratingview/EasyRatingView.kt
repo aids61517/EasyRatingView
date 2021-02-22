@@ -114,8 +114,10 @@ class EasyRatingView @JvmOverloads constructor(
 
     private var fullDrawablePaint: Paint? = null
 
-    var countOfStarsPerRow: Int = 0
-        private set
+    var countOfStarsPerRow: Int = 1
+        private set(value) {
+            field = if (value <= 0) 1 else value
+        }
 
     private val boundCalculator by lazy {
         StarBoundCalculator(this)
