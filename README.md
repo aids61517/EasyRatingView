@@ -64,5 +64,5 @@ allprojects {
 ```
 Add the Gradle dependency:
 ```groovy
-implementation 'com.github.aids61517:EasyRatingView:1.1.0'
+implementation 'com.github.aids61517:EasyRatingView:1.1.1'
 ```
