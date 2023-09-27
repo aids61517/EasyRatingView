@@ -11,7 +11,7 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import kotlin.math.floor
 
-class EasyRatingView @JvmOverloads constructor(
+open class EasyRatingView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null,
     defStyleAttribute: Int
